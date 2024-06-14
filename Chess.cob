@@ -167,8 +167,61 @@ checkValidMove.
 		WHEN 'P'
 			PERFORM pawnMove
 			EXIT PARAGRAPH
+		WHEN 'N'
+			PERFORM knightMove
+			EXIT PARAGRAPH
+		WHEN 'B'
+			PERFORM bishopMove
+			EXIT PARAGRAPH
+		WHEN 'R'
+			PERFORM rookMove
+			EXIT PARAGRAPH
+		WHEN 'Q'
+			PERFORM queenMove
+			EXIT PARAGRAPH
+		WHEN 'K'
+			PERFORM kingMove
+			EXIT PARAGRAPH
 	END-EVALUATE.
 
+knightMove.
+	IF SPieceY - SDestY = 2 OR SDestY - SPieceY = 2 THEN
+		IF SPieceX - SDestX  = 1 OR SDestX - SPieceX = 1 THEN
+			IF OWNER(SDestX, SDestY) = ' ' THEN
+				PERFORM movePiece
+				EXIT PARAGRAPH
+			END-IF
+			IF OWNER(SDestX, SDestY) = 'B' THEN
+				PERFORM takePiece
+				EXIT PARAGRAPH
+			END-IF
+		END-IF
+	END-IF
+	IF SPieceX - SDestX = 2 OR SDestX - SPieceX = 2 THEN
+		IF SPieceY - SDestY  = 1 OR SDestY - SPieceY = 1 THEN
+			IF OWNER(SDestX, SDestY) = ' ' THEN
+				PERFORM movePiece
+				EXIT PARAGRAPH
+			END-IF
+			IF OWNER(SDestX, SDestY) = 'B' THEN
+				PERFORM takePiece
+				EXIT PARAGRAPH
+			END-IF
+		END-IF
+	END-IF
+	DISPLAY "Invalid knight move".
+	
+bishopMove.
+	DISPLAY "Invalid bishop move".
+	
+rookMove.
+	DISPLAY "Invalid rook move".
+	
+queenMove.
+	DISPLAY "Invalid queen move".
+	
+kingMove.
+	DISPLAY "Invalid king move".
 
 pawnMove.
 	IF SDestX - SPieceX = 0 THEN
