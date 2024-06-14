@@ -1,0 +1,116 @@
+	>> SOURCE FORMAT FREE
+IDENTIFICATION DIVISION.
+PROGRAM-ID. Chess.
+AUTHOR. Colby Schexnayder.
+DATE-WRITTEN. 06/13/2024.
+ENVIRONMENT DIVISION.
+INPUT-OUTPUT SECTION.
+FILE-CONTROL.
+	SELECT MoveList ASSIGN TO "movelist.txt"
+		ORGANIZATION IS INDEXED
+		ACCESS MODE IS RANDOM
+		RECORD KEY IS IDNum.
+
+DATA DIVISION.
+FILE SECTION.
+FD MoveList.
+01 MoveData.
+	02 IDNum PIC 9(4).
+
+WORKING-STORAGE SECTION.
+01 ChessBoard.
+	02 BIDNum PIC 9(4).
+	02 BoardY OCCURS 8 TIMES INDEXED BY Y.
+		03 BoardX OCCURS 8 TIMES INDEXED BY X.
+			04 Piece.
+				05 OWNER PIC A.
+					88 Black VALUE 'B'.
+					88 White VALUE 'W'.
+					88 Empty VALUE ' '.
+				05 Symbol PIC A VALUE ' '.
+				05 GameValue PIC 9 VALUE 0.
+				05 CurrentX PIC 9 VALUE 0.
+				05 CurrentY PIC 9 VALUE 0.
+				05 Moved PIC 9.
+					88 HasMoved VALUE 1.
+					88 HasNotMoved VALUE 0.
+01 BoardWidth PIC 9 VALUE 8.
+01 BoardHeight PIC 9 VALUE 8.
+
+PROCEDURE DIVISION.
+
+SET X Y TO 1
+
+PERFORM InitBoard VARYING Y FROM 1 BY 1 UNTIL Y > BoardHeight
+	AFTER X FROM 1 BY 1 UNTIL X > BoardWidth
+	
+PERFORM displayBoard VARYING Y FROM 1 BY 1 UNTIL Y > BoardHeight
+	AFTER X FROM 1 BY 1 UNTIL X > BoardWidth.
+
+STOP RUN.
+
+InitBoard.
+	EVALUATE Y
+		WHEN 1
+			EVALUATE X
+				WHEN 1
+					MOVE "BR5110" TO Piece(X,Y)
+				WHEN 2
+					MOVE "BN3120" TO Piece(X,Y)
+				WHEN 3
+					MOVE "BB3130" TO Piece(X,Y)
+				WHEN 4
+					MOVE "BQ9140" TO Piece(X,Y)
+				WHEN 5
+					MOVE "BK0150" TO Piece(X,Y)
+				WHEN 6
+					MOVE "BB3160" TO Piece(X,Y)
+				WHEN 7
+					MOVE "BN3170" TO Piece(X,Y)
+				WHEN 8
+					MOVE "BR5180" TO Piece(X,Y)
+				WHEN OTHER
+					DISPLAY "OUT OF BOUNDS"
+			END-EVALUATE
+		WHEN 2
+			MOVE "BP1210" TO Piece(X,Y)
+			MOVE Y TO CurrentY(X,Y)
+		WHEN 7
+			MOVE "WP1710" TO Piece(X,Y)
+			MOVE Y TO CurrentY(X,Y)
+		WHEN 8
+			EVALUATE X
+				WHEN 1
+					MOVE "WR5810" TO Piece(X,Y)
+				WHEN 2
+					MOVE "WN3820" TO Piece(X,Y)
+				WHEN 3
+					MOVE "WB3830" TO Piece(X,Y)
+				WHEN 4
+					MOVE "WQ9840" TO Piece(X,Y)
+				WHEN 5
+					MOVE "WK0850" TO Piece(X,Y)
+				WHEN 6
+					MOVE "WB3860" TO Piece(X,Y)
+				WHEN 7
+					MOVE "WN3870" TO Piece(X,Y)
+				WHEN 8
+					MOVE "WR5880" TO Piece(X,Y)
+				WHEN OTHER
+					DISPLAY "OUT OF BOUNDS"
+			END-EVALUATE
+		WHEN OTHER
+			MOVE "  0000" TO Piece(X, Y)
+			MOVE X TO CurrentX(X, Y)
+			MOVE Y TO CurrentY(X, Y)
+	END-EVALUATE.
+
+
+displayBoard.
+	DISPLAY "|" OWNER(X, Y) SYMBOL(X, Y) "|" WITH NO ADVANCING
+	
+	IF x = BoardWidth THEN
+		DISPLAY " "
+	END-IF.
+
+END PROGRAM Chess.
