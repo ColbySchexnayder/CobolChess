@@ -34,8 +34,26 @@ WORKING-STORAGE SECTION.
 				05 Moved PIC 9.
 					88 HasMoved VALUE 1.
 					88 HasNotMoved VALUE 0.
+					
 01 BoardWidth PIC 9 VALUE 8.
 01 BoardHeight PIC 9 VALUE 8.
+01 EmptySpace PIC X(6) VALUE "  0000".
+
+01 SelectedPiece.
+	02 SPieceX PIC 9 VALUE 0.
+	02 SPieceY PIC 9 VALUE 0.
+01 SelectedDestination.
+	02 SDestX PIC 9 VALUE 0.
+	02 SDestY PIC 9 VALUE 0.
+
+01 PlayerTurn PIC A.
+	88 BlacksTurn VALUE 'B'.
+	88 WhitesTurn VALUE 'W'.
+	
+01 WhiteScore PIC 999 VALUE 0.
+01 BlackScore PIC 999 VALUE 0.
+
+01 PromotionChoice PIC X VALUE ' '.
 
 PROCEDURE DIVISION.
 
@@ -44,8 +62,24 @@ SET X Y TO 1
 PERFORM InitBoard VARYING Y FROM 1 BY 1 UNTIL Y > BoardHeight
 	AFTER X FROM 1 BY 1 UNTIL X > BoardWidth
 	
-PERFORM displayBoard VARYING Y FROM 1 BY 1 UNTIL Y > BoardHeight
-	AFTER X FROM 1 BY 1 UNTIL X > BoardWidth.
+
+MOVE 'W' TO PlayerTurn
+
+PERFORM FOREVER
+	
+	PERFORM displayBoard VARYING Y FROM 1 BY 1 UNTIL Y > BoardHeight
+		AFTER X FROM 1 BY 1 UNTIL X > BoardWidth
+	
+	DISPLAY "Choose piece to move (11 - 88, 99 to Quit)"
+	ACCEPT SelectedPiece
+	IF SelectedPiece = 99 THEN
+		EXIT PERFORM
+	END-IF
+	DISPLAY "Choose destination (11 - 88)"
+	ACCEPT SelectedDestination
+	PERFORM checkValidMove
+	
+END-PERFORM
 
 STOP RUN.
 
@@ -111,6 +145,85 @@ displayBoard.
 	
 	IF x = BoardWidth THEN
 		DISPLAY " "
+	END-IF.
+
+checkValidMove.
+	DISPLAY "Validating move"
+	IF SPieceX > BoardWidth OR SPieceX < 1 OR SPieceY > BoardHeight OR SPieceY < 1 THEN
+		DISPLAY "Selection Out Of Bounds"
+		EXIT PARAGRAPH
+	END-IF
+	IF SDestX > BoardWidth OR SDestX < 1 OR SDestY > BoardHeight OR SDestY < 1 THEN
+		DISPLAY "Destination Out Of Bounds"
+		EXIT PARAGRAPH
+	END-IF
+	
+	IF OWNER(SPieceX, SPieceY) NOT EQUALS 'W' THEN
+		DISPLAY "Not Your Piece"
+		EXIT PARAGRAPH
+	END-IF
+	
+	EVALUATE Symbol(SPieceX, SPieceY)
+		WHEN 'P'
+			PERFORM pawnMove
+			EXIT PARAGRAPH
+	END-EVALUATE.
+
+
+pawnMove.
+	IF SDestX - SPieceX = 0 THEN
+		IF SPieceY - SDestY = 1 THEN
+			IF OWNER(SDestX, SDestY) = ' ' THEN
+				PERFORM movePiece
+				PERFORM promotePawn
+				EXIT PARAGRAPH
+			END-IF
+		END-IF
+		IF SPieceY - SDestY = 2 AND HasNotMoved(SPieceX, SPieceY) THEN
+			IF OWNER(SDestX, SDestY) = ' ' AND OWNER(SDestX, SDestY - 1) = ' 'THEN
+				PERFORM movePiece
+				PERFORM promotePawn
+				EXIT PARAGRAPH
+			END-IF
+		END-IF
+	END-IF
+	IF SDestX - SPieceX = 1 OR SPieceX - SDestX = 1 THEN
+		IF SPieceY - SDestY = 1 AND OWNER(SDestX, SDestY) = 'B' THEN
+			PERFORM takePiece
+			PERFORM promotePawn
+			EXIT PARAGRAPH
+		END-IF
+	END-IF
+	DISPLAY "Invalid Pawn Move".
+	
+takePiece.
+	DISPLAY OWNER(SPieceX, SPieceY) Symbol(SPieceX, SPieceY) " takes " 
+					OWNER(SDestX, SDestY) Symbol(SDestX, SDestY)
+	COMPUTE WhiteScore EQUAL WhiteScore + GameValue(SDestX, SDestY)
+	PERFORM movePiece.
+			
+movePiece.
+	MOVE Piece(SPieceX, SPieceY) TO Piece(SDestX, SDestY)
+	MOVE EmptySpace TO Piece(SPieceX, SPieceY).
+
+promotePawn.
+	IF SDestY = 1 THEN
+		DISPLAY "Promote pawn (N, B, R, or Q): " WITH NO ADVANCING
+		ACCEPT PromotionChoice
+		EVALUATE PromotionChoice
+			WHEN "N"
+				MOVE "N" TO Symbol(SDestX, SDestY)
+				MOVE 3 TO GameValue(SDestX, SDestY)
+			WHEN "B"
+				MOVE "B" TO Symbol(SDestX, SDestY)
+				MOVE 3 TO GameValue(SDestX, SDestY)
+			WHEN "E"
+				MOVE "R" TO Symbol(SDestX, SDestY)
+				MOVE 5 TO GameValue(SDestX, SDestY)
+			WHEN "Q"
+				MOVE "Q" TO Symbol(SDestX, SDestY)
+				MOVE 9 TO GameValue(SDestX, SDestY)
+		END-EVALUATE
 	END-IF.
 
 END PROGRAM Chess.
