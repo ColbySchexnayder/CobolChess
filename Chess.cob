@@ -54,6 +54,8 @@ WORKING-STORAGE SECTION.
 01 BlackScore PIC 999 VALUE 0.
 
 01 PromotionChoice PIC X VALUE ' '.
+01 TmpVar PIC S99V99 VALUE 0.
+01 CheckOrigin PIC 9 VALUE 0.
 
 PROCEDURE DIVISION.
 
@@ -215,6 +217,56 @@ bishopMove.
 	DISPLAY "Invalid bishop move".
 	
 rookMove.
+	IF SDestX - SPieceX = 0 THEN
+		COMPUTE TmpVar EQUAL SDestY - SPieceY
+		IF TmpVar > 0 THEN
+			MOVE 1 TO TmpVar
+		ELSE
+			MOVE -1 TO TmpVar
+		END-IF
+		COMPUTE CheckOrigin EQUAL SPieceY + TmpVar
+		
+		PERFORM VARYING Y FROM CheckOrigin BY TmpVar UNTIL Y = SDestY
+			
+			IF OWNER(SPieceX, Y) NOT EQUALS ' ' THEN
+				DISPLAY "Invalid rook move"
+				EXIT PARAGRAPH
+			END-IF
+			IF OWNER(SDestX, SDestY) = 'B' THEN
+				PERFORM takePiece
+				EXIT PARAGRAPH
+			END-IF
+			IF OWNER(SDestX, SDestY) = ' ' THEN
+				PERFORM movePiece
+				EXIT PARAGRAPH
+			END-IF
+		END-PERFORM
+	END-IF
+	IF SDestY - SDestY = 0 THEN
+		COMPUTE TmpVar EQUAL SDestX - SPieceX
+		IF TmpVar > 0 THEN
+			MOVE 1 TO TmpVar
+		ELSE
+			MOVE -1 TO TmpVar
+		END-IF
+		COMPUTE CheckOrigin EQUAL SPieceX + TmpVar
+		
+		PERFORM VARYING X FROM CheckOrigin BY TmpVar UNTIL X = SDestX
+			
+			IF OWNER(X, SDestY) NOT EQUALS ' ' THEN
+				DISPLAY "Invalid rook move"
+				EXIT PARAGRAPH
+			END-IF
+			IF OWNER(SDestX, SDestY) = 'B' THEN
+				PERFORM takePiece
+				EXIT PARAGRAPH
+			END-IF
+			IF OWNER(SDestX, SDestY) = ' ' THEN
+				PERFORM movePiece
+				EXIT PARAGRAPH
+			END-IF
+		END-PERFORM
+	END-IF
 	DISPLAY "Invalid rook move".
 	
 queenMove.
@@ -248,7 +300,7 @@ pawnMove.
 		END-IF
 	END-IF
 	DISPLAY "Invalid Pawn Move".
-	
+
 takePiece.
 	DISPLAY OWNER(SPieceX, SPieceY) Symbol(SPieceX, SPieceY) " takes " 
 					OWNER(SDestX, SDestY) Symbol(SDestX, SDestY)
