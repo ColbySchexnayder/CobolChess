@@ -235,25 +235,25 @@ bishopMove.
 		ELSE
 			MOVE 1 TO TmpVar2
 		END-IF
-				
-		PERFORM VARYING COUNTER FROM 1 BY 1 UNTIL Y = SDestY - 1
+		IF SPieceX - SDestX > 1 OR SPieceX - SDestX < -1 THEN		
+			PERFORM VARYING COUNTER FROM 1 BY 1 UNTIL Y = SDestY
 			
-			COMPUTE X = SPieceX + (TmpVar2 * COUNTER)
-			COMPUTE Y = SPieceY + (TmpVar * COUNTER)
+				COMPUTE X = SPieceX + (TmpVar2 * COUNTER)
+				COMPUTE Y = SPieceY + (TmpVar * COUNTER)
 			
-			DISPLAY SPieceX ", " SDestX
-			DISPLAY SPieceY ", " SDestY
-			DISPLAY X ", " Y
-			DISPLAY TmpVar2 ", " TmpVar
-			DISPLAY COUNTER
+				DISPLAY SPieceX ", " SDestX
+				DISPLAY SPieceY ", " SDestY
+				DISPLAY X ", " Y
+				DISPLAY TmpVar2 ", " TmpVar
+				DISPLAY COUNTER
 			
-			IF OWNER(X, Y) NOT EQUALS ' ' THEN
-				DISPLAY "Invalid bishop move"
-				EXIT PARAGRAPH
-			END-IF
+				IF OWNER(X, Y) NOT EQUALS ' ' THEN
+					DISPLAY "Invalid bishop move"
+					EXIT PARAGRAPH
+				END-IF
 			
-		END-PERFORM		
-		
+			END-PERFORM		
+		END-IF
 		IF OWNER(SDestX, SDestY) = ' ' THEN
 			PERFORM movePiece
 			EXIT PARAGRAPH
