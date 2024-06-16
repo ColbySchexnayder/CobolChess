@@ -55,7 +55,10 @@ WORKING-STORAGE SECTION.
 
 01 PromotionChoice PIC X VALUE ' '.
 01 TmpVar PIC S99V99 VALUE 0.
+01 TmpVar2 PIC S99V99 VALUE 0.
 01 CheckOrigin PIC 9 VALUE 0.
+
+01 COUNTER PIC 99 VALUE 1.
 
 PROCEDURE DIVISION.
 
@@ -151,6 +154,11 @@ displayBoard.
 
 checkValidMove.
 	DISPLAY "Validating move"
+	IF SPieceX = SDestX AND SPieceY = SDestY THEN
+		DISPLAY "Invalid move"
+		EXIT PARAGRAPH
+	END-IF
+	
 	IF SPieceX > BoardWidth OR SPieceX < 1 OR SPieceY > BoardHeight OR SPieceY < 1 THEN
 		DISPLAY "Selection Out Of Bounds"
 		EXIT PARAGRAPH
@@ -214,6 +222,47 @@ knightMove.
 	DISPLAY "Invalid knight move".
 	
 bishopMove.
+	COMPUTE TmpVar EQUAL (SPieceY - SDestY) / (SPieceX - SDestX)
+	IF TmpVar = 1 OR TmpVar = -1 THEN
+		IF SDestY < SPieceY THEN
+			MOVE -1 TO TmpVar
+		ELSE
+			MOVE 1 TO TmpVar
+		END-IF
+		
+		IF SDestX < SPieceX THEN
+			MOVE -1 TO TmpVar2
+		ELSE
+			MOVE 1 TO TmpVar2
+		END-IF
+				
+		PERFORM VARYING COUNTER FROM 1 BY 1 UNTIL Y = SDestY - 1
+			
+			COMPUTE X = SPieceX + (TmpVar2 * COUNTER)
+			COMPUTE Y = SPieceY + (TmpVar * COUNTER)
+			
+			DISPLAY SPieceX ", " SDestX
+			DISPLAY SPieceY ", " SDestY
+			DISPLAY X ", " Y
+			DISPLAY TmpVar2 ", " TmpVar
+			DISPLAY COUNTER
+			
+			IF OWNER(X, Y) NOT EQUALS ' ' THEN
+				DISPLAY "Invalid bishop move"
+				EXIT PARAGRAPH
+			END-IF
+			
+		END-PERFORM		
+		
+		IF OWNER(SDestX, SDestY) = ' ' THEN
+			PERFORM movePiece
+			EXIT PARAGRAPH
+		END-IF
+		IF OWNER(SDestX, SDestY) = 'B' THEN
+			PERFORM takePiece
+			EXIT PARAGRAPH
+		END-IF
+	END-IF
 	DISPLAY "Invalid bishop move".
 	
 rookMove.
@@ -270,9 +319,56 @@ rookMove.
 	DISPLAY "Invalid rook move".
 	
 queenMove.
-	DISPLAY "Invalid queen move".
+	PERFORM bishopMove
+	PERFORM rookMove.
 	
 kingMove.
+	COMPUTE TmpVar EQUAL SDestX - SPieceX
+	COMPUTE TmpVar2 EQUAL SDestY - SPieceY
+	
+	IF TmpVar < 2 OR TmpVar > -2 THEN
+		IF TmpVar2 < 2 OR TmpVar > -2 THEN
+			IF OWNER(SDestX, SDestY) = ' ' THEN
+				PERFORM movePiece
+				EXIT PARAGRAPH
+			END-IF
+			
+			IF OWNER(SDestX, SDestY) = 'B' THEN
+				PERFORM takePiece
+				EXIT PARAGRAPH
+			END-IF
+		END-IF
+	END-IF
+	
+	*>Castling
+	IF HasNotMoved(SPieceX, SPieceY) AND HasNotMoved(SDestX, SDestY) THEN
+		IF SDestX = 1 AND SDestY = SPieceY THEN
+			PERFORM VARYING X FROM 2 BY 1 UNTIL X = SPieceX
+				IF OWNER(X, SDestY) NOT EQUAL ' ' THEN
+					DISPLAY "Cannot castle"
+					EXIT PARAGRAPH
+				END-IF
+				
+				MOVE Piece(1,8) TO Piece(4, 8)
+				MOVE EmptySpace TO Piece(1, 8)
+				MOVE Piece(SPieceX, SPieceY) TO Piece(3, 8)
+				MOVE EmptySpace TO Piece(SPieceX, SPieceY)
+			END-PERFORM
+		END-IF
+		IF SDestX = 8 AND SDestY = SPieceY THEN
+			PERFORM VARYING X FROM 7 BY -1 UNTIL X = SPieceX
+				IF OWNER(X, SDestY) NOT EQUAL ' ' THEN
+					DISPLAY "Cannot castle"
+					EXIT PARAGRAPH
+				END-IF
+				
+				MOVE Piece(8,8) TO Piece(6, 8)
+				MOVE EmptySpace TO Piece(8, 8)
+				MOVE Piece(SPieceX, SPieceY) TO Piece(7, 8)
+				MOVE EmptySpace TO Piece(SPieceX, SPieceY)
+			END-PERFORM
+		END-IF
+	END-IF
 	DISPLAY "Invalid king move".
 
 pawnMove.
