@@ -265,22 +265,24 @@ rookMove.
 			MOVE -1 TO TmpVar
 		END-IF
 		COMPUTE CheckOrigin EQUAL SPieceY + TmpVar
-		
-		PERFORM VARYING Y FROM CheckOrigin BY TmpVar UNTIL Y = SDestY
+		IF SPieceX - SDestX > 1 OR SPieceX - SDestX < -1 THEN	
+			PERFORM VARYING Y FROM CheckOrigin BY TmpVar UNTIL Y = SDestY
 			
-			IF OWNER(SPieceX, Y) NOT EQUALS ' ' THEN
-				DISPLAY "Invalid rook move"
-				EXIT PARAGRAPH
-			END-IF
-			IF OWNER(SDestX, SDestY) = 'B' THEN
-				PERFORM takePiece
-				EXIT PARAGRAPH
-			END-IF
-			IF OWNER(SDestX, SDestY) = ' ' THEN
-				PERFORM movePiece
-				EXIT PARAGRAPH
-			END-IF
-		END-PERFORM
+				IF OWNER(SPieceX, Y) NOT EQUALS ' ' THEN
+					DISPLAY "Invalid rook move"
+					EXIT PARAGRAPH
+				END-IF
+			
+			END-PERFORM
+		END-IF
+		IF OWNER(SDestX, SDestY) = 'B' THEN
+			PERFORM takePiece
+			EXIT PARAGRAPH
+		END-IF
+		IF OWNER(SDestX, SDestY) = ' ' THEN
+			PERFORM movePiece
+			EXIT PARAGRAPH
+		END-IF
 	END-IF
 	IF SDestY - SDestY = 0 THEN
 		COMPUTE TmpVar EQUAL SDestX - SPieceX
@@ -290,22 +292,25 @@ rookMove.
 			MOVE -1 TO TmpVar
 		END-IF
 		COMPUTE CheckOrigin EQUAL SPieceX + TmpVar
-		
-		PERFORM VARYING X FROM CheckOrigin BY TmpVar UNTIL X = SDestX
+		IF SPieceX - SDestX > 1 OR SPieceX - SDestX < -1 THEN
+			PERFORM VARYING X FROM CheckOrigin BY TmpVar UNTIL X = SDestX
 			
-			IF OWNER(X, SDestY) NOT EQUALS ' ' THEN
-				DISPLAY "Invalid rook move"
-				EXIT PARAGRAPH
-			END-IF
-			IF OWNER(SDestX, SDestY) = 'B' THEN
-				PERFORM takePiece
-				EXIT PARAGRAPH
-			END-IF
-			IF OWNER(SDestX, SDestY) = ' ' THEN
-				PERFORM movePiece
-				EXIT PARAGRAPH
-			END-IF
-		END-PERFORM
+				IF OWNER(X, SDestY) NOT EQUALS ' ' THEN
+					DISPLAY "Invalid rook move"
+					EXIT PARAGRAPH
+				END-IF
+			
+			END-PERFORM
+		
+		END-IF
+		IF OWNER(SDestX, SDestY) = 'B' THEN
+			PERFORM takePiece
+			EXIT PARAGRAPH
+		END-IF
+		IF OWNER(SDestX, SDestY) = ' ' THEN
+			PERFORM movePiece
+			EXIT PARAGRAPH
+		END-IF
 	END-IF
 	DISPLAY "Invalid rook move".
 	
