@@ -53,6 +53,10 @@ WORKING-STORAGE SECTION.
 01 WhiteScore PIC 999 VALUE 0.
 01 BlackScore PIC 999 VALUE 0.
 
+01 IsValidMove PIC X.
+	88 ValidMove VALUE 'Y'.
+	88 NotValid VALUE 'N'.
+
 01 PromotionChoice PIC X VALUE ' '.
 01 TmpVar PIC S99V99 VALUE 0.
 01 TmpVar2 PIC S99V99 VALUE 0.
@@ -71,10 +75,11 @@ PERFORM InitBoard VARYING Y FROM 1 BY 1 UNTIL Y > BoardHeight
 MOVE 'W' TO PlayerTurn
 
 PERFORM FOREVER
-	
+	MOVE 'N' TO IsValidMove
 	PERFORM displayBoard VARYING Y FROM 1 BY 1 UNTIL Y > BoardHeight
 		AFTER X FROM 1 BY 1 UNTIL X > BoardWidth
 	
+	DISPLAY PlayerTurn "'s Turn"
 	DISPLAY "Choose piece to move (11 - 88, 99 to Quit)"
 	ACCEPT SelectedPiece
 	IF SelectedPiece = 99 THEN
@@ -83,6 +88,13 @@ PERFORM FOREVER
 	DISPLAY "Choose destination (11 - 88)"
 	ACCEPT SelectedDestination
 	PERFORM checkValidMove
+	IF IsValidMove = 'Y' THEN
+		IF PlayerTurn = 'W' THEN
+			MOVE 'B' TO PlayerTurn
+		ELSE
+			MOVE 'W' TO PlayerTurn
+		END-IF
+	END-IF
 	
 END-PERFORM
 
@@ -168,7 +180,7 @@ checkValidMove.
 		EXIT PARAGRAPH
 	END-IF
 	
-	IF OWNER(SPieceX, SPieceY) NOT EQUALS 'W' THEN
+	IF OWNER(SPieceX, SPieceY) NOT EQUALS PlayerTurn THEN
 		DISPLAY "Not Your Piece"
 		EXIT PARAGRAPH
 	END-IF
@@ -201,7 +213,7 @@ knightMove.
 				PERFORM movePiece
 				EXIT PARAGRAPH
 			END-IF
-			IF OWNER(SDestX, SDestY) = 'B' THEN
+			IF OWNER(SDestX, SDestY) NOT EQUALS PlayerTurn THEN
 				PERFORM takePiece
 				EXIT PARAGRAPH
 			END-IF
@@ -213,7 +225,7 @@ knightMove.
 				PERFORM movePiece
 				EXIT PARAGRAPH
 			END-IF
-			IF OWNER(SDestX, SDestY) = 'B' THEN
+			IF OWNER(SDestX, SDestY) NOT EQUALS PlayerTurn THEN
 				PERFORM takePiece
 				EXIT PARAGRAPH
 			END-IF
@@ -249,7 +261,7 @@ bishopMove.
 			PERFORM movePiece
 			EXIT PARAGRAPH
 		END-IF
-		IF OWNER(SDestX, SDestY) = 'B' THEN
+		IF OWNER(SDestX, SDestY) NOT EQUALS PlayerTurn THEN
 			PERFORM takePiece
 			EXIT PARAGRAPH
 		END-IF
@@ -275,12 +287,12 @@ rookMove.
 			
 			END-PERFORM
 		END-IF
-		IF OWNER(SDestX, SDestY) = 'B' THEN
-			PERFORM takePiece
-			EXIT PARAGRAPH
-		END-IF
 		IF OWNER(SDestX, SDestY) = ' ' THEN
 			PERFORM movePiece
+			EXIT PARAGRAPH
+		END-IF
+		IF OWNER(SDestX, SDestY) NOT EQUALS PlayerTurn THEN
+			PERFORM takePiece
 			EXIT PARAGRAPH
 		END-IF
 	END-IF
@@ -303,12 +315,12 @@ rookMove.
 			END-PERFORM
 		
 		END-IF
-		IF OWNER(SDestX, SDestY) = 'B' THEN
-			PERFORM takePiece
-			EXIT PARAGRAPH
-		END-IF
 		IF OWNER(SDestX, SDestY) = ' ' THEN
 			PERFORM movePiece
+			EXIT PARAGRAPH
+		END-IF
+		IF OWNER(SDestX, SDestY) NOT EQUALS PlayerTurn THEN
+			PERFORM takePiece
 			EXIT PARAGRAPH
 		END-IF
 	END-IF
@@ -329,7 +341,7 @@ kingMove.
 				EXIT PARAGRAPH
 			END-IF
 			
-			IF OWNER(SDestX, SDestY) = 'B' THEN
+			IF OWNER(SDestX, SDestY) NOT EQUALS PlayerTurn THEN
 				PERFORM takePiece
 				EXIT PARAGRAPH
 			END-IF
@@ -369,15 +381,20 @@ kingMove.
 
 pawnMove.
 	IF SDestX - SPieceX = 0 THEN
-		IF SPieceY - SDestY = 1 THEN
+		IF PlayerTurn = 'W' THEN
+			MOVE 1 TO TmpVar
+		ELSE
+			MOVE -1 TO TmpVar
+		END-IF
+		IF SPieceY - SDestY = 1*TmpVar THEN
 			IF OWNER(SDestX, SDestY) = ' ' THEN
 				PERFORM movePiece
 				PERFORM promotePawn
 				EXIT PARAGRAPH
 			END-IF
 		END-IF
-		IF SPieceY - SDestY = 2 AND HasNotMoved(SPieceX, SPieceY) THEN
-			IF OWNER(SDestX, SDestY) = ' ' AND OWNER(SDestX, SDestY - 1) = ' 'THEN
+		IF SPieceY - SDestY = 2*TmpVar AND HasNotMoved(SPieceX, SPieceY) THEN
+			IF OWNER(SDestX, SDestY) = ' ' AND OWNER(SDestX, SDestY - 1*TmpVar) = ' ' THEN
 				PERFORM movePiece
 				PERFORM promotePawn
 				EXIT PARAGRAPH
@@ -385,7 +402,7 @@ pawnMove.
 		END-IF
 	END-IF
 	IF SDestX - SPieceX = 1 OR SPieceX - SDestX = 1 THEN
-		IF SPieceY - SDestY = 1 AND OWNER(SDestX, SDestY) = 'B' THEN
+		IF SPieceY - SDestY = 1*TmpVar AND OWNER(SDestX, SDestY) NOT EQUALS PlayerTurn THEN
 			PERFORM takePiece
 			PERFORM promotePawn
 			EXIT PARAGRAPH
@@ -396,15 +413,24 @@ pawnMove.
 takePiece.
 	DISPLAY OWNER(SPieceX, SPieceY) Symbol(SPieceX, SPieceY) " takes " 
 					OWNER(SDestX, SDestY) Symbol(SDestX, SDestY)
-	COMPUTE WhiteScore EQUAL WhiteScore + GameValue(SDestX, SDestY)
+	IF PlayerTurn = 'W' THEN
+		COMPUTE WhiteScore EQUAL WhiteScore + GameValue(SDestX, SDestY)
+	ELSE
+		COMPUTE BlackScore EQUAL BlackScore + GameValue(SDestX, SDestY)
+	END-IF
+	IF Symbol(SDestX, SDestY) = 'K' THEN
+		DISPLAY PlayerTurn "WINS"
+		EXIT PROGRAM
+	END-IF
 	PERFORM movePiece.
 			
 movePiece.
 	MOVE Piece(SPieceX, SPieceY) TO Piece(SDestX, SDestY)
-	MOVE EmptySpace TO Piece(SPieceX, SPieceY).
+	MOVE EmptySpace TO Piece(SPieceX, SPieceY)
+	MOVE 'Y' TO IsValidMove.
 
 promotePawn.
-	IF SDestY = 1 THEN
+	IF (SDestY = 1 AND PlayerTurn = 'W') OR (SDestY = 8 AND PlayerTurn = 'B') THEN
 		DISPLAY "Promote pawn (N, B, R, or Q): " WITH NO ADVANCING
 		ACCEPT PromotionChoice
 		EVALUATE PromotionChoice
